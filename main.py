@@ -1,31 +1,39 @@
-from mido import MidiFile, MidiTrack
+from mido import MidiFile, MidiTrack, MetaMessage, bpm2tempo, Message
 import pandas as pd
+import numpy as np
+from keras.models import Sequential
+from keras.layers import Dense, Dropout, Embedding, LSTM, Conv1D, MaxPooling1D, Flatten
+from keras.callbacks import EarlyStopping, ModelCheckpoint, TensorBoard
+from keras.utils import np_utils
 
 # open midi file
 mid = MidiFile('./RHCP_midi/FortuneFaded.mid', clip=True)
-new_mid = MidiFile()
 
 drum_track_number = 0
 # find track number of drums
 for i in range(len(mid.tracks)):
-    if mid.tracks[i][0].channel == 9:
-        drum_track_number = i
+    for j in range(len(mid.tracks[i])):
+        if mid.tracks[i][j].is_meta:
+            continue
+        if mid.tracks[i][j].channel == 9:
+            drum_track_number = i
+            break
 
-# find BPM in ticks per beat, and divide it to Thirty-Second 32 notes
-new_mid.ticks_per_beat = mid.ticks_per_beat
+# find ticks per beat, and divide it to Thirty-Second 32 notes
 drum_track = mid.tracks[drum_track_number]
 ticks_per_beat_in_32_notes = mid.ticks_per_beat/8
 
 # change notes time to stick it to 32 notes
 tmp_time = 0
 time_with_note = {}
-for i, m in enumerate(drum_track):
+for i, message in enumerate(drum_track):
+    # find time how it goes through song
     tmp_time += drum_track[i].time
-    m.time = round(tmp_time/ticks_per_beat_in_32_notes)
+    message.time = round(tmp_time/ticks_per_beat_in_32_notes)
     # make velocity of notes same
-    if m.type == 'note_on':
-        if m.velocity > 0:
-            m.velocity = 1
+    if message.type == 'note_on':
+        if message.velocity > 0:
+            message.velocity = 1
 
 # crating DataFrame for notes sticked to 32s and filter only note_on notes
 transcription = pd.DataFrame(m.dict() for m in drum_track)
@@ -37,5 +45,85 @@ transcription = transcription.reindex(pd.RangeIndex(transcription.index.max()+1)
 # retype to int
 transcription = transcription.astype(int)
 transcription.columns = transcription.columns.astype(int)
-print(transcription)
 
+transcription = transcription.reset_index(drop=True)
+# find all instruments in song
+instruments = transcription.columns.tolist()
+
+inputs_list = []
+outputs_list = []
+sequence_len = 32
+raw_notes = transcription.values
+for i in range(len(raw_notes) - sequence_len):
+    input_start = i
+    input_end = i + sequence_len
+    output_start = input_end
+    output_end = output_start + 1
+
+    # for every 32 notes sequence set next note as output
+    inputs_list.append(raw_notes[input_start:input_end])
+    outputs_list.append(raw_notes[output_start:output_end])
+
+outputs_list = list(np.array(outputs_list).reshape(-1, np.array(outputs_list).shape[-1]))
+
+inputs_list = np.array(inputs_list)
+outputs_list = np.array(outputs_list)
+
+output_shape = outputs_list.shape[1]
+dropout = 0.3
+
+# very very very basic LSTM model
+model = Sequential()
+model.add(LSTM(sequence_len, input_shape=(sequence_len, len(instruments)), return_sequences=True, dropout=dropout))
+model.add(LSTM(sequence_len, return_sequences=True, dropout=dropout))
+model.add(LSTM(sequence_len, dropout=dropout))
+model.add(Dense(output_shape, activation='softmax'))
+model.compile(loss='binary_crossentropy', optimizer='adam')
+
+mc = ModelCheckpoint(filepath='./new_encode_1st_try.h5', monitor='val_loss', verbose=1, save_best_only=True)
+
+history = model.fit(inputs_list, outputs_list, epochs=200, callbacks=mc, validation_split=0.1, verbose=1, shuffle=False)
+
+# predict new notes
+prediction = model.predict(inputs_list, verbose=0)
+# round prediction to 1 or 0
+prediction = np.around(prediction)
+# retype it to int
+prediction = prediction.astype(int)
+
+# create new midi file
+new_mid = MidiFile()
+new_mid.ticks_per_beat = mid.ticks_per_beat
+meta_track = MidiTrack()
+new_mid.tracks.append(meta_track)
+
+# necessary meta track
+meta_track.append(MetaMessage(type='track_name', name='meta_track', time=0))
+meta_track.append(MetaMessage(type='time_signature', numerator=4, denominator=4, clocks_per_click=24, notated_32nd_notes_per_beat=8, time=0))
+meta_track.append(MetaMessage(type='set_tempo', tempo=bpm2tempo(60), time=0))
+
+drum_track_new = MidiTrack()
+new_mid.tracks.append(drum_track_new)
+
+# apend notes to drum track
+ticks_per_32note = 120
+for i, note in enumerate(prediction):
+    if i == 0:
+        notes_from_last_message = 0
+    else:
+        notes_from_last_message = 1
+
+    same_note_count = 0
+    for idx, inst in enumerate(note):
+
+        if inst == 0:
+            pass
+        # if there are more notes at the same time played, they must have time 0
+        elif same_note_count == 0:
+            drum_track_new.append(Message('note_on', channel=9, note=instruments[idx], velocity=80, time=notes_from_last_message*ticks_per_32note))
+            same_note_count += 1
+        else:
+            drum_track_new.append(Message('note_on', channel=9, note=instruments[idx], velocity=80, time=0))
+            same_note_count += 1
+
+new_mid.save("./output/output.mid")
