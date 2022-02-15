@@ -1,0 +1,13 @@
+# Ignore everything
+*
+
+# But not these files...
+!.gitignore
+!main_fortune.ipynb
+!main.py
+!main.ipynb
+!*/old_outputs
+!*/output
+!*/RHCP_midi
+!*/mp3s
+!transcription.csv
