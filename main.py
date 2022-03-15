@@ -115,7 +115,7 @@ def create_midi(tempo, transcription, ticks_per_beat, file_name):
     new_mid.save(file_name)
 
 
-mid, drum_track_number = open_midi('./RHCP_midi/2ROCK.MID')
+mid, drum_track_number = open_midi('./RHCP_midi/ZephyrSong.mid')
 drum_track = copy.deepcopy(mid.tracks[drum_track_number])
 
 transcription = get_transcription(drum_track, mid)
@@ -125,7 +125,7 @@ transcription.to_csv("transcripion.csv")
 instruments = transcription.columns.tolist()
 
 bpm = 118
-create_midi(bpm, transcription.values, mid.ticks_per_beat, "./output/transcription_new.mid")
+create_midi(bpm, transcription.values, mid.ticks_per_beat, "./output/transcription_new_exp.mid")
 #
 # inputs_list = []
 # outputs_list = []
