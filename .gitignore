@@ -1,16 +1,7 @@
 # Ignore everything
-*
-
-# But not these files...
-!.gitignore
-!main_fortune.ipynb
-!main.py
-!main.ipynb
-!*/old_outputs
-!*/output
-!*/RHCP_midi
-!*/mp3s
-!transcription.csv
-!*/Slipknot_midi
-!main_list_slipknot.ipynb
-!main_list.ipynb
+venv
+.git
+.idea
+.ipynb_checkpoints
+new_encode_1st_try.h5
+.DS_Store
