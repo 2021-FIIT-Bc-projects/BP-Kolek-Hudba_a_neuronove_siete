@@ -1,0 +1,31 @@
+CISLO	NAZOV SKLADBY		ORIGINAL SKLADBA
+-------------------------------------------------
+1			rhcp1_AI.mp3		
+2			rhcp1_OG.mp3		Paralel Universe
+4			rhcp2_AI.mp3		
+3			rhcp2_OG.mp3		Fortune Faded
+6			rhcp3_AI.mp3		
+5			rhcp3_OG.mp3		Easily
+7			slipknot1_AI.mp3	
+8			slipknot1_OG.mp3	Duality
+9			slipknot2_AI.mp3	
+10			slipknot2_OG.mp3	Before I forget
+12			slipknot3_AI.mp3	
+11 			slipknot3_OG.mp3	Disasterpiece
+
+
+CISLO	ODPOVED
+---------------------------
+1		Umelá inteligencia
+2		Originál
+3		Originál
+4		Umelá inteligencia
+5		Originál
+6		Umelá inteligencia
+7		Umelá inteligencia
+8		Originál
+9		Umelá inteligencia
+10		Originál
+11		Originál
+12		Umelá inteligencia
+

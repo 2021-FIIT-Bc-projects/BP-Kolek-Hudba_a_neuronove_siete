@@ -1,0 +1,12 @@
+rhcp1_AI.mp3		
+rhcp1_OG.mp3		Paralel Universe
+rhcp2_AI.mp3		
+rhcp2_OG.mp3		Fortune Faded
+rhcp3_AI.mp3		
+rhcp3_OG.mp3		Easily
+slipknot1_AI.mp3	
+slipknot1_OG.mp3	Duality
+slipknot2_AI.mp3	
+slipknot2_OG.mp3	Before I forget
+slipknot3_AI.mp3	
+slipknot3_OG.mp3	Disasterpiece
